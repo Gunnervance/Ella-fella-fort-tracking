@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Squad Tracker</title>
+  <meta name="theme-color" content="#120f1f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span id="squad-name">Squad Tracker</span>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button class="tab is-active" data-tab="log" role="tab">Log match</button>
+        <button class="tab" data-tab="dash" role="tab">Dashboard</button>
+        <button class="tab" data-tab="history" role="tab">History</button>
+        <button class="tab" data-tab="squad" role="tab">Squad</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="banner" class="banner" hidden></div>
+
+    <!-- LOG MATCH -->
+    <section id="tab-log" class="panel">
+      <h1 class="h1">Log a match</h1>
+      <p class="sub">Fill this in from the end-of-match screen. Takes about 20 seconds.</p>
+
+      <form id="log-form" class="card form" novalidate>
+        <div class="grid-3">
+          <label class="field">
+            <span>Mode</span>
+            <select id="f-mode" required></select>
+          </label>
+          <label class="field">
+            <span>Placement</span>
+            <input id="f-placement" type="number" inputmode="numeric" min="1" max="100" placeholder="e.g. 4" required>
+          </label>
+          <label class="field">
+            <span>When</span>
+            <input id="f-when" type="datetime-local" required>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label class="field">
+            <span>Drop spot</span>
+            <input id="f-drop" type="text" list="drop-list" placeholder="Where you landed" autocomplete="off">
+            <datalist id="drop-list"></datalist>
+          </label>
+          <label class="field">
+            <span>How it ended</span>
+            <select id="f-elim"></select>
+          </label>
+        </div>
+
+        <div class="players-block">
+          <div class="players-head">
+            <span>Who played</span>
+            <span class="num-head">Kills</span>
+            <span class="num-head">Damage</span>
+            <span class="num-head">Assists</span>
+          </div>
+          <div id="f-players"></div>
+          <p id="no-players" class="empty" hidden>No squad members yet. Add them in the <a href="#squad" data-goto="squad">Squad</a> tab.</p>
+        </div>
+
+        <label class="field">
+          <span>Notes</span>
+          <textarea id="f-notes" rows="2" placeholder="What went right or wrong? (optional)"></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="f-submit">Save match</button>
+          <span id="f-status" class="status" role="status"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="tab-dash" class="panel" hidden>
+      <div class="dash-head">
+        <h1 class="h1">Squad dashboard</h1>
+        <div class="filters">
+          <div class="seg" id="range-seg">
+            <button data-range="session" class="is-active">Last session</button>
+            <button data-range="7">7 days</button>
+            <button data-range="30">30 days</button>
+            <button data-range="all">All time</button>
+          </div>
+          <select id="mode-filter" aria-label="Mode filter"></select>
+        </div>
+      </div>
+      <p id="range-label" class="sub"></p>
+
+      <div id="dash-empty" class="card empty-card" hidden>
+        <h2 class="h2">No matches in this range</h2>
+        <p>Log a game in the <a href="#log" data-goto="log">Log match</a> tab and your stats show up here.</p>
+      </div>
+
+      <div id="dash-body">
+        <div class="kpis" id="kpis"></div>
+
+        <div class="dash-grid">
+          <div class="card">
+            <h2 class="h2">Placement trend</h2>
+            <p class="hint">Each dot is a game. Higher is better. Gold dots are wins.</p>
+            <div class="chart-box"><canvas id="placement-chart"></canvas></div>
+          </div>
+          <div class="card">
+            <h2 class="h2">How games end</h2>
+            <p class="hint">Losses only, so you can see what kills you most.</p>
+            <div id="elim-bars" class="bars"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Players</h2>
+          <div class="table-scroll">
+            <table class="table" id="player-table"></table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="h2">Drop spots</h2>
+          <p class="hint">"Died early" means the game ended in a hot drop fight.</p>
+          <div class="table-scroll">
+            <table class="table" id="drop-table"></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="tab-history" class="panel" hidden>
+      <h1 class="h1">Match history</h1>
+      <p class="sub">Every logged game, newest first.</p>
+      <div id="history-list" class="history"></div>
+    </section>
+
+    <!-- SQUAD -->
+    <section id="tab-squad" class="panel" hidden>
+      <h1 class="h1">Squad</h1>
+      <p class="sub">Add everyone who plays with you. Benched players stay in the stats but drop off the log form.</p>
+      <form id="add-player" class="card inline-form">
+        <label class="field grow">
+          <span>Gamertag</span>
+          <input id="new-tag" type="text" placeholder="Epic display name" autocomplete="off" required>
+        </label>
+        <button class="btn btn-primary" type="submit">Add player</button>
+      </form>
+      <div id="squad-list" class="squad-list"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">Squad Tracker · stats logged by your squad</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
